@@ -5292,11 +5292,7 @@ jQuery.event = {
 
 					leverageNative( el, "click" );
 				}
-
 				// Return non-false to allow normal event-path propagation
-				return true;
-			},
-
 			// For cross-browser consistency, suppress native .click() on links
 			// Also prevent it if we're currently inside a leveraged native-event stack
 			_default: function( event ) {
@@ -5325,14 +5321,14 @@ jQuery.event = {
 // synthetic events by interrupting progress until reinvoked in response to
 // *native* events that it fires directly, ensuring that state changes have
 // already occurred before other listeners are invoked.
+<<<<<<< HEAD
 function leverageNative( el, type, isSetup ) {
 
 	// Missing `isSetup` indicates a trigger call, which must force setup through jQuery.event.add
-	if ( !isSetup ) {
-		if ( dataPriv.get( el, type ) === undefined ) {
-			jQuery.event.add( el, type, returnTrue );
-		}
-		return;
+=======
+function leverageNative( el, type, expectSync ) {
+
+	// Missing expectSync indicates a trigger call, which must force setup through jQuery.event.add
 	}
 
 	// Register the controller as a special universal handler for all event namespaces
@@ -5340,13 +5336,23 @@ function leverageNative( el, type, isSetup ) {
 	jQuery.event.add( el, type, {
 		namespace: false,
 		handler: function( event ) {
+<<<<<<< HEAD
 			var result,
+=======
+			var notAsync, result,
+>>>>>>> 38162664ef063b44bdf571fa246cfcb6bd75690d
 				saved = dataPriv.get( this, type );
 
 			if ( ( event.isTrigger & 1 ) && this[ type ] ) {
 
 				// Interrupt processing of the outer synthetic .trigger()ed event
+<<<<<<< HEAD
 				if ( !saved ) {
+=======
+				// Saved data should be false in such cases, but might be a leftover capture object
+				// from an async native handler (gh-4350)
+				if ( !saved.length ) {
+>>>>>>> 38162664ef063b44bdf571fa246cfcb6bd75690d
 
 					// Store arguments for use when handling the inner native event
 					// There will always be at least one argument (an event object), so this array
@@ -5355,22 +5361,49 @@ function leverageNative( el, type, isSetup ) {
 					dataPriv.set( this, type, saved );
 
 					// Trigger the native event and capture its result
+<<<<<<< HEAD
 					this[ type ]();
 					result = dataPriv.get( this, type );
 					dataPriv.set( this, type, false );
 
+=======
+					// Support: IE <=9 - 11+
+					// focus() and blur() are asynchronous
+					notAsync = expectSync( this, type );
+					this[ type ]();
+					result = dataPriv.get( this, type );
+					if ( saved !== result || notAsync ) {
+						dataPriv.set( this, type, false );
+					} else {
+						result = {};
+					}
+>>>>>>> 38162664ef063b44bdf571fa246cfcb6bd75690d
 					if ( saved !== result ) {
 
 						// Cancel the outer synthetic event
 						event.stopImmediatePropagation();
 						event.preventDefault();
 
+<<<<<<< HEAD
 						return result;
 					}
 
 				// If this is an inner synthetic event for an event with a bubbling surrogate
 				// (focus or blur), assume that the surrogate already propagated from triggering
 				// the native event and prevent that from happening again here.
+=======
+						// Support: Chrome 86+
+						// In Chrome, if an element having a focusout handler is blurred by
+						// clicking outside of it, it invokes the handler synchronously. If
+						// that handler calls `.remove()` on the element, the data is cleared,
+						// leaving `result` undefined. We need to guard against this.
+						return result && result.value;
+					}
+
+				// If this is an inner synthetic event for an event with a bubbling surrogate
+				// (focus or blur), assume that the surrogate already propagated from triggering the
+				// native event and prevent that from happening again here.
+>>>>>>> 38162664ef063b44bdf571fa246cfcb6bd75690d
 				// This technically gets the ordering wrong w.r.t. to `.trigger()` (in which the
 				// bubbling surrogate propagates *after* the non-bubbling base), but that seems
 				// less bad than duplication.
@@ -5380,6 +5413,7 @@ function leverageNative( el, type, isSetup ) {
 
 			// If this is a native event triggered above, everything is now in order
 			// Fire an inner synthetic event with the original arguments
+<<<<<<< HEAD
 			} else if ( saved ) {
 
 				// ...and capture the result
@@ -5399,6 +5433,24 @@ function leverageNative( el, type, isSetup ) {
 				// and radios. We accept this limitation.
 				event.stopPropagation();
 				event.isImmediatePropagationStopped = returnTrue;
+=======
+			} else if ( saved.length ) {
+
+				// ...and capture the result
+				dataPriv.set( this, type, {
+					value: jQuery.event.trigger(
+
+						// Support: IE <=9 - 11+
+						// Extend with the prototype to reset the above stopImmediatePropagation()
+						jQuery.extend( saved[ 0 ], jQuery.Event.prototype ),
+						saved.slice( 1 ),
+						this
+					)
+				} );
+
+				// Abort handling of the native event
+				event.stopImmediatePropagation();
+>>>>>>> 38162664ef063b44bdf571fa246cfcb6bd75690d
 			}
 		}
 	} );
@@ -5537,6 +5589,7 @@ jQuery.each( {
 }, jQuery.event.addProp );
 
 jQuery.each( { focus: "focusin", blur: "focusout" }, function( type, delegateType ) {
+<<<<<<< HEAD
 
 	function focusMappedHandler( nativeEvent ) {
 		if ( document.documentMode ) {
@@ -5576,11 +5629,14 @@ jQuery.each( { focus: "focusin", blur: "focusout" }, function( type, delegateTyp
 		}
 	}
 
+=======
+>>>>>>> 38162664ef063b44bdf571fa246cfcb6bd75690d
 	jQuery.event.special[ type ] = {
 
 		// Utilize native event if possible so blur/focus sequence is correct
 		setup: function() {
 
+<<<<<<< HEAD
 			var attaches;
 
 			// Claim the first handler
@@ -5604,6 +5660,15 @@ jQuery.each( { focus: "focusin", blur: "focusout" }, function( type, delegateTyp
 				// Return false to allow normal processing in the caller
 				return false;
 			}
+=======
+			// Claim the first handler
+			// dataPriv.set( this, "focus", ... )
+			// dataPriv.set( this, "blur", ... )
+			leverageNative( this, type, expectSync );
+
+			// Return false to allow normal processing in the caller
+			return false;
+>>>>>>> 38162664ef063b44bdf571fa246cfcb6bd75690d
 		},
 		trigger: function() {
 
@@ -5614,6 +5679,7 @@ jQuery.each( { focus: "focusin", blur: "focusout" }, function( type, delegateTyp
 			return true;
 		},
 
+<<<<<<< HEAD
 		teardown: function() {
 			var attaches;
 
@@ -5632,6 +5698,8 @@ jQuery.each( { focus: "focusin", blur: "focusout" }, function( type, delegateTyp
 			}
 		},
 
+=======
+>>>>>>> 38162664ef063b44bdf571fa246cfcb6bd75690d
 		// Suppress native focus or blur if we're currently inside
 		// a leveraged native-event stack
 		_default: function( event ) {
@@ -5640,6 +5708,7 @@ jQuery.each( { focus: "focusin", blur: "focusout" }, function( type, delegateTyp
 
 		delegateType: delegateType
 	};
+<<<<<<< HEAD
 
 	// Support: Firefox <=44
 	// Firefox doesn't have focus(in | out) events
@@ -5692,6 +5761,8 @@ jQuery.each( { focus: "focusin", blur: "focusout" }, function( type, delegateTyp
 			}
 		}
 	};
+=======
+>>>>>>> 38162664ef063b44bdf571fa246cfcb6bd75690d
 } );
 
 // Create mouseenter/leave events using mouseover/out and event-time checks
@@ -5923,7 +5994,11 @@ function domManip( collection, args, callback, ignored ) {
 			if ( hasScripts ) {
 				doc = scripts[ scripts.length - 1 ].ownerDocument;
 
+<<<<<<< HEAD
 				// Re-enable scripts
+=======
+				// Reenable scripts
+>>>>>>> 38162664ef063b44bdf571fa246cfcb6bd75690d
 				jQuery.map( scripts, restoreScript );
 
 				// Evaluate executable scripts on first document insertion
@@ -5994,8 +6069,12 @@ jQuery.extend( {
 		if ( !support.noCloneChecked && ( elem.nodeType === 1 || elem.nodeType === 11 ) &&
 				!jQuery.isXMLDoc( elem ) ) {
 
+<<<<<<< HEAD
 			// We eschew jQuery#find here for performance reasons:
 			// https://jsperf.com/getall-vs-sizzle/2
+=======
+			// We eschew Sizzle here for performance reasons: https://jsperf.com/getall-vs-sizzle/2
+>>>>>>> 38162664ef063b44bdf571fa246cfcb6bd75690d
 			destElements = getAll( clone );
 			srcElements = getAll( elem );
 
@@ -6271,6 +6350,18 @@ var swap = function( elem, options, callback ) {
 
 var rboxStyle = new RegExp( cssExpand.join( "|" ), "i" );
 
+<<<<<<< HEAD
+=======
+var whitespace = "[\\x20\\t\\r\\n\\f]";
+
+
+var rtrimCSS = new RegExp(
+	"^" + whitespace + "+|((?:^|[^\\\\])(?:\\\\.)*)" + whitespace + "+$",
+	"g"
+);
+
+
+>>>>>>> 38162664ef063b44bdf571fa246cfcb6bd75690d
 
 
 ( function() {
@@ -6380,7 +6471,11 @@ var rboxStyle = new RegExp( cssExpand.join( "|" ), "i" );
 				trChild = document.createElement( "div" );
 
 				table.style.cssText = "position:absolute;left:-11111px;border-collapse:separate";
+<<<<<<< HEAD
 				tr.style.cssText = "box-sizing:content-box;border:1px solid";
+=======
+				tr.style.cssText = "border:1px solid";
+>>>>>>> 38162664ef063b44bdf571fa246cfcb6bd75690d
 
 				// Support: Chrome 86+
 				// Height set through cssText does not get applied.
@@ -6392,7 +6487,11 @@ var rboxStyle = new RegExp( cssExpand.join( "|" ), "i" );
 				// In our bodyBackground.html iframe,
 				// display for all div elements is set to "inline",
 				// which causes a problem only in Android 8 Chrome 86.
+<<<<<<< HEAD
 				// Ensuring the div is `display: block`
+=======
+				// Ensuring the div is display: block
+>>>>>>> 38162664ef063b44bdf571fa246cfcb6bd75690d
 				// gets around this issue.
 				trChild.style.display = "block";
 
@@ -6579,8 +6678,12 @@ function setPositiveNumber( _elem, value, subtract ) {
 function boxModelAdjustment( elem, dimension, box, isBorderBox, styles, computedVal ) {
 	var i = dimension === "width" ? 1 : 0,
 		extra = 0,
+<<<<<<< HEAD
 		delta = 0,
 		marginDelta = 0;
+=======
+		delta = 0;
+>>>>>>> 38162664ef063b44bdf571fa246cfcb6bd75690d
 
 	// Adjustment may not be necessary
 	if ( box === ( isBorderBox ? "border" : "content" ) ) {
@@ -6590,10 +6693,15 @@ function boxModelAdjustment( elem, dimension, box, isBorderBox, styles, computed
 	for ( ; i < 4; i += 2 ) {
 
 		// Both box models exclude margin
+<<<<<<< HEAD
 		// Count margin delta separately to only add it after scroll gutter adjustment.
 		// This is needed to make negative margins work with `outerHeight( true )` (gh-3982).
 		if ( box === "margin" ) {
 			marginDelta += jQuery.css( elem, box + cssExpand[ i ], true, styles );
+=======
+		if ( box === "margin" ) {
+			delta += jQuery.css( elem, box + cssExpand[ i ], true, styles );
+>>>>>>> 38162664ef063b44bdf571fa246cfcb6bd75690d
 		}
 
 		// If we get here with a content-box, we're seeking "padding" or "border" or "margin"
@@ -6644,7 +6752,11 @@ function boxModelAdjustment( elem, dimension, box, isBorderBox, styles, computed
 		) ) || 0;
 	}
 
+<<<<<<< HEAD
 	return delta + marginDelta;
+=======
+	return delta;
+>>>>>>> 38162664ef063b44bdf571fa246cfcb6bd75690d
 }
 
 function getWidthOrHeight( elem, dimension, extra ) {
@@ -6742,6 +6854,7 @@ jQuery.extend( {
 
 	// Don't automatically add "px" to these possibly-unitless properties
 	cssNumber: {
+<<<<<<< HEAD
 		animationIterationCount: true,
 		aspectRatio: true,
 		borderImageSlice: true,
@@ -6771,6 +6884,28 @@ jQuery.extend( {
 		stopOpacity: true,
 		strokeMiterlimit: true,
 		strokeOpacity: true
+=======
+		"animationIterationCount": true,
+		"columnCount": true,
+		"fillOpacity": true,
+		"flexGrow": true,
+		"flexShrink": true,
+		"fontWeight": true,
+		"gridArea": true,
+		"gridColumn": true,
+		"gridColumnEnd": true,
+		"gridColumnStart": true,
+		"gridRow": true,
+		"gridRowEnd": true,
+		"gridRowStart": true,
+		"lineHeight": true,
+		"opacity": true,
+		"order": true,
+		"orphans": true,
+		"widows": true,
+		"zIndex": true,
+		"zoom": true
+>>>>>>> 38162664ef063b44bdf571fa246cfcb6bd75690d
 	},
 
 	// Add in properties whose names you wish to fix before
@@ -8496,6 +8631,7 @@ jQuery.each( [ "radio", "checkbox" ], function() {
 
 
 // Return jQuery for attributes-only inclusion
+<<<<<<< HEAD
 var location = window.location;
 
 var nonce = { guid: Date.now() };
@@ -8529,6 +8665,11 @@ jQuery.parseXML = function( data ) {
 	}
 	return xml;
 };
+=======
+
+
+support.focusin = "onfocusin" in window;
+>>>>>>> 38162664ef063b44bdf571fa246cfcb6bd75690d
 
 
 var rfocusMorph = /^(?:focusinfocus|focusoutblur)$/,
@@ -8716,6 +8857,88 @@ jQuery.fn.extend( {
 } );
 
 
+<<<<<<< HEAD
+=======
+// Support: Firefox <=44
+// Firefox doesn't have focus(in | out) events
+// Related ticket - https://bugzilla.mozilla.org/show_bug.cgi?id=687787
+//
+// Support: Chrome <=48 - 49, Safari <=9.0 - 9.1
+// focus(in | out) events fire after focus & blur events,
+// which is spec violation - http://www.w3.org/TR/DOM-Level-3-Events/#events-focusevent-event-order
+// Related ticket - https://bugs.chromium.org/p/chromium/issues/detail?id=449857
+if ( !support.focusin ) {
+	jQuery.each( { focus: "focusin", blur: "focusout" }, function( orig, fix ) {
+
+		// Attach a single capturing handler on the document while someone wants focusin/focusout
+		var handler = function( event ) {
+			jQuery.event.simulate( fix, event.target, jQuery.event.fix( event ) );
+		};
+
+		jQuery.event.special[ fix ] = {
+			setup: function() {
+
+				// Handle: regular nodes (via `this.ownerDocument`), window
+				// (via `this.document`) & document (via `this`).
+				var doc = this.ownerDocument || this.document || this,
+					attaches = dataPriv.access( doc, fix );
+
+				if ( !attaches ) {
+					doc.addEventListener( orig, handler, true );
+				}
+				dataPriv.access( doc, fix, ( attaches || 0 ) + 1 );
+			},
+			teardown: function() {
+				var doc = this.ownerDocument || this.document || this,
+					attaches = dataPriv.access( doc, fix ) - 1;
+
+				if ( !attaches ) {
+					doc.removeEventListener( orig, handler, true );
+					dataPriv.remove( doc, fix );
+
+				} else {
+					dataPriv.access( doc, fix, attaches );
+				}
+			}
+		};
+	} );
+}
+var location = window.location;
+
+var nonce = { guid: Date.now() };
+
+var rquery = ( /\?/ );
+
+
+
+// Cross-browser xml parsing
+jQuery.parseXML = function( data ) {
+	var xml, parserErrorElem;
+	if ( !data || typeof data !== "string" ) {
+		return null;
+	}
+
+	// Support: IE 9 - 11 only
+	// IE throws on parseFromString with invalid input.
+	try {
+		xml = ( new window.DOMParser() ).parseFromString( data, "text/xml" );
+	} catch ( e ) {}
+
+	parserErrorElem = xml && xml.getElementsByTagName( "parsererror" )[ 0 ];
+	if ( !xml || parserErrorElem ) {
+		jQuery.error( "Invalid XML: " + (
+			parserErrorElem ?
+				jQuery.map( parserErrorElem.childNodes, function( el ) {
+					return el.textContent;
+				} ).join( "\n" ) :
+				data
+		) );
+	}
+	return xml;
+};
+
+
+>>>>>>> 38162664ef063b44bdf571fa246cfcb6bd75690d
 var
 	rbracket = /\[\]$/,
 	rCRLF = /\r?\n/g,
@@ -10560,9 +10783,13 @@ jQuery.fn.extend( {
 	},
 
 	hover: function( fnOver, fnOut ) {
+<<<<<<< HEAD
 		return this
 			.on( "mouseenter", fnOver )
 			.on( "mouseleave", fnOut || fnOver );
+=======
+		return this.mouseenter( fnOver ).mouseleave( fnOut || fnOver );
+>>>>>>> 38162664ef063b44bdf571fa246cfcb6bd75690d
 	}
 } );
 
